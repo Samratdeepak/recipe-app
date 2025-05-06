@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: recipe-backend
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: recipe-backend
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.backend.replicaCount }}
+  strategy:
+    type: {{ .Values.deploymentStrategy.type }}
+    {{- if eq .Values.deploymentStrategy.type "RollingUpdate" }}
+    rollingUpdate:
+      maxUnavailable: {{ .Values.deploymentStrategy.rollingUpdate.maxUnavailable }}
+      maxSurge: {{ .Values.deploymentStrategy.rollingUpdate.maxSurge }}
+    {{- end }}
+  selector:
+    matchLabels:
+      app: recipe-backend
+  template:
+    metadata:
+      labels:
+        app: recipe-backend
+    spec:
+      containers:
+      - name: recipe-backend
+        image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+        imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.backend.service.targetPort }}
+        resources:
+{{ toYaml .Values.backend.resources | indent 10 }}
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.healthChecks.backend.liveness.path }}
+            port: {{ .Values.backend.service.targetPort }}
+          initialDelaySeconds: {{ .Values.healthChecks.backend.liveness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.healthChecks.backend.liveness.periodSeconds }}
+          timeoutSeconds: {{ .Values.healthChecks.backend.liveness.timeoutSeconds }}
+          failureThreshold: {{ .Values.healthChecks.backend.liveness.failureThreshold }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.healthChecks.backend.readiness.path }}
+            port: {{ .Values.backend.service.targetPort }}
+          initialDelaySeconds: {{ .Values.healthChecks.backend.readiness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.healthChecks.backend.readiness.periodSeconds }}
+          timeoutSeconds: {{ .Values.healthChecks.backend.readiness.timeoutSeconds }}
+          failureThreshold: {{ .Values.healthChecks.backend.readiness.failureThreshold }}

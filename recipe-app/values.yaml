@@ -1,0 +1,114 @@
+# Global values
+global:
+  namespace: recipe-app
+  imagePullPolicy: Always
+
+# Backend configuration
+backend:
+  image:
+    repository: deepaktas267/backend-final
+    tag: v13
+    pullPolicy: Always
+  replicaCount: 2
+  service:
+    type: LoadBalancer
+    port: 8000
+    targetPort: 8000
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+# Frontend configuration
+frontend:
+  image:
+    repository: deepaktas267/frontend-final
+    tag: v13
+    pullPolicy: Always
+  replicaCount: 2
+  service:
+    type: LoadBalancer
+    port: 80
+    targetPort: 80
+    nodePort: 30131
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+  hosts:
+    - host: recipe.local
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            serviceName: recipe-frontend
+            servicePort: 80
+    - host: api.recipe.local
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            serviceName: recipe-backend
+            servicePort: 8000
+  
+# Deployment strategy configuration
+deploymentStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 25%
+    maxSurge: 25%
+
+# Health checks configuration
+healthChecks:
+  backend:
+    liveness:
+      path: /healthz  # Update with your actual health endpoint
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+    readiness:
+      path: /readyz   # Update with your actual readiness endpoint
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+  frontend:
+    liveness:
+      path: /         # Frontend health check
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+    readiness:
+      path: /         # Frontend readiness check
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+
+# Pod disruption budget
+pdb:
+  enabled: true
+  backend:
+    minAvailable: 1
+  frontend:
+    minAvailable: 1
+
+annotations:
+  "helm.sh/hook": pre-install,pre-upgrade
+  "helm.sh/hook-weight": "-5"
+  "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded

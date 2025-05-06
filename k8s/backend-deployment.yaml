@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: recipe-backend
+  namespace: recipe-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: recipe-backend
+  template:
+    metadata:
+      labels:
+        app: recipe-backend
+    spec:
+      containers:
+      - name: recipe-backend
+        image: deepaktas267/backend-final:v13
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
