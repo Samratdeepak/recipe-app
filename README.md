@@ -1,5 +1,6 @@
 # steps to setup the backend
 cd backend
+
 python3 -m venv venv
 
 # in windows
@@ -11,10 +12,13 @@ source venv/bin/activate
 # then run these commands
 
 pip install -r requirements.txt
+
 uvicorn main:app --reload
 
 
 # steps to setup frontend
 cd frontend
+
 bun/npm install
+
 bun dev / npm run dev
